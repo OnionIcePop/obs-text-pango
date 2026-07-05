@@ -189,13 +189,8 @@ jobs:
           $buildType = $env:BUILD_TYPE
           cmake --install build --config $buildType
 
-      - name: Package artifact
-        shell: pwsh
-        run: |
-          Compress-Archive -Path package/* -DestinationPath obs-text-pango-windows-x64.zip -Force
-
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
           name: obs-text-pango-windows-x64
-          path: obs-text-pango-windows-x64.zip
+          path: package/**
