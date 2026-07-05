@@ -245,6 +245,7 @@ static uint32_t pango_source_get_height(void *data)
 static void pango_source_get_defaults(obs_data_t *settings)
 {
 	obs_data_t *font;
+	obs_data_t *fallback_font;
 
 	obs_data_set_default_bool(settings, "font_from_file", false);
 	obs_data_set_default_string(settings, "text", obs_module_text("Text"));
@@ -254,6 +255,12 @@ static void pango_source_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(font, "size", 256);
 	obs_data_set_default_obj(settings, "font", font);
 	obs_data_release(font);
+
+	fallback_font = obs_data_create();
+	obs_data_set_default_string(fallback_font, "face", DEFAULT_FACE);
+	obs_data_set_default_int(fallback_font, "size", 256);
+	obs_data_set_default_obj(settings, "fallback_font", fallback_font);
+	obs_data_release(fallback_font);
 
 
 	obs_data_set_default_bool(settings, "gradient", false);
@@ -297,6 +304,8 @@ static obs_properties_t *pango_source_get_properties(void *unused)
 
 	obs_properties_add_font(props, "font",
 		obs_module_text("Font"));
+	obs_properties_add_font(props, "fallback_font",
+		obs_module_text("Font.Fallback"));
 	prop = obs_properties_add_bool(props, "from_file",
 		obs_module_text("ReadFromFile"));
 	obs_property_set_modified_callback(prop,
@@ -393,6 +402,9 @@ static void pango_source_destroy(void *data)
 	if (src->font_name != NULL)
 		bfree(src->font_name);
 
+	if (src->fallback_font_name != NULL)
+		bfree(src->fallback_font_name);
+
 	if (src->text_file != NULL)
 		bfree(src->text_file);
 
@@ -455,6 +467,7 @@ static void pango_source_update(void *data, obs_data_t *settings)
 {
 	struct pango_source *src = data;
 	obs_data_t *font;
+	obs_data_t *fallback_font;
 
 	if (src->text) {
 		bfree(src->text);
@@ -468,6 +481,14 @@ static void pango_source_update(void *data, obs_data_t *settings)
 	if (src->font_name)
 		bfree(src->font_name);
 	src->font_name  = bstrdup(obs_data_get_string(font, "face"));
+
+	fallback_font = obs_data_get_obj(settings, "fallback_font");
+	if (src->fallback_font_name)
+		bfree(src->fallback_font_name);
+	src->fallback_font_name = bstrdup(fallback_font ? obs_data_get_string(fallback_font, "face") : "");
+	if (fallback_font)
+		obs_data_release(fallback_font);
+
 	if(src->font_from_file) { // Keep sizes synced.
 		src->font_size = (uint16_t)obs_data_get_int(settings, "font_file_size");
 		obs_data_set_int(font, "size", src->font_size);

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdio.h>
+#include <string.h>
+
 #include "text-pango.h"
 #include <pango/pangocairo.h>
 #include <pango/pangofc-fontmap.h>
@@ -54,7 +57,15 @@ static void set_font(struct pango_source *src, PangoLayout *layout) {
 
 	if (!desc) { // If we havnt loaded a font file, go ahead and load our font name choice.
 		desc = pango_font_description_new ();
-		pango_font_description_set_family(desc, src->font_name);
+		if (src->fallback_font_name && src->fallback_font_name[0] != '\0' && strcmp(src->font_name, src->fallback_font_name) != 0) {
+			size_t family_len = strlen(src->font_name) + strlen(src->fallback_font_name) + 3;
+			char *families = bmalloc(family_len);
+			snprintf(families, family_len, "%s, %s", src->font_name, src->fallback_font_name);
+			pango_font_description_set_family(desc, families);
+			bfree(families);
+		} else {
+			pango_font_description_set_family(desc, src->font_name);
+		}
 		pango_font_description_set_weight(desc, !!(src->font_flags & OBS_FONT_BOLD) ? PANGO_WEIGHT_BOLD : 0);
 		pango_font_description_set_style(desc, !!(src->font_flags & OBS_FONT_ITALIC) ? PANGO_STYLE_ITALIC : 0);
 	}
@@ -185,14 +196,16 @@ static bool pango_source_properties_font_from_file_changed(obs_properties_t *pro
 		obs_property_t *property, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(property);
-	obs_property_t *font_prop,*font_file_prop,*font_file_size_p;
+	obs_property_t *font_prop,*fallback_font_prop,*font_file_prop,*font_file_size_p;
 
 	bool enabled = obs_data_get_bool(settings, "font_from_file");
 
 	font_prop = obs_properties_get(props, "font");
+	fallback_font_prop = obs_properties_get(props, "fallback_font");
 	font_file_prop = obs_properties_get(props, "font_file");
 	font_file_size_p = obs_properties_get(props, "font_file_size");
 	obs_property_set_visible(font_prop, !enabled);
+	obs_property_set_visible(fallback_font_prop, !enabled);
 	obs_property_set_visible(font_file_prop, enabled);
 	obs_property_set_visible(font_file_size_p, enabled);
 
