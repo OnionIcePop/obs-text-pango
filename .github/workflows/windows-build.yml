@@ -21,6 +21,7 @@ env:
   BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
   VCPKG_ROOT: C:\vcpkg
   VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+  VCPKG_PANGO_STACK_CACHE_KEY: pango-cairo-fontconfig-freetype-x64-windows
 
 jobs:
   windows-x64:
@@ -45,6 +46,17 @@ jobs:
           script: |
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '')
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '')
+
+      - name: Restore vcpkg package cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\vcpkg\installed
+            C:\vcpkg\packages
+            C:\vcpkg\downloads
+          key: ${{ runner.os }}-${{ env.VCPKG_PANGO_STACK_CACHE_KEY }}-${{ hashFiles('.github/workflows/windows-build.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.VCPKG_PANGO_STACK_CACHE_KEY }}-
 
       - name: Create dependency directory
         shell: pwsh
