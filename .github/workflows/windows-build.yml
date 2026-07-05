@@ -21,7 +21,6 @@ env:
   BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
   VCPKG_ROOT: C:\vcpkg
   VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
-  VCPKG_PANGO_STACK_CACHE_KEY: pango-cairo-fontconfig-freetype-x64-windows
 
 jobs:
   windows-x64:
@@ -46,17 +45,6 @@ jobs:
           script: |
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '')
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '')
-
-      - name: Restore vcpkg package cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:\vcpkg\installed
-            C:\vcpkg\packages
-            C:\vcpkg\downloads
-          key: ${{ runner.os }}-${{ env.VCPKG_PANGO_STACK_CACHE_KEY }}-${{ hashFiles('.github/workflows/windows-build.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.VCPKG_PANGO_STACK_CACHE_KEY }}-
 
       - name: Create dependency directory
         shell: pwsh
@@ -99,57 +87,57 @@ jobs:
               Invoke-WebRequest -Uri $asset.browser_download_url -OutFile obs-runtime.zip
               Expand-Archive -Path obs-runtime.zip -DestinationPath deps/obs-runtime
 
-      # - name: Generate OBS import library
-      #   shell: pwsh
-      #   run: |
-      #     $dll = Get-ChildItem deps/obs-runtime -Recurse -Include obs.dll,libobs.dll |
-      #       Select-Object -First 1
-      #     if (-not $dll) {
-      #       throw "Could not find obs.dll or libobs.dll in the OBS Studio Windows runtime."
-      #     }
+      - name: Generate OBS import library
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem deps/obs-runtime -Recurse -Include obs.dll,libobs.dll |
+            Select-Object -First 1
+          if (-not $dll) {
+            throw "Could not find obs.dll or libobs.dll in the OBS Studio Windows runtime."
+          }
 
-      #     $exports = & dumpbin /nologo /exports $dll.FullName |
-      #       ForEach-Object {
-      #         if ($_ -match "^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+([^\s=]+)") {
-      #           $matches[1]
-      #         }
-      #       } |
-      #       Where-Object { $_ } |
-      #       Sort-Object -Unique
+          $exports = & dumpbin /nologo /exports $dll.FullName |
+            ForEach-Object {
+              if ($_ -match "^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+([^\s=]+)") {
+                $matches[1]
+              }
+            } |
+            Where-Object { $_ } |
+            Sort-Object -Unique
 
-      #     if (-not $exports) {
-      #       throw "Could not read exports from $($dll.FullName)."
-      #     }
+          if (-not $exports) {
+            throw "Could not read exports from $($dll.FullName)."
+          }
 
-      #     @("LIBRARY $($dll.Name)", "EXPORTS") + $exports |
-      #       Set-Content -Encoding ascii deps/obs.def
-      #     lib /nologo /machine:x64 /def:deps/obs.def /out:deps/obs.lib
+          @("LIBRARY $($dll.Name)", "EXPORTS") + $exports |
+            Set-Content -Encoding ascii deps/obs.def
+          lib /nologo /machine:x64 /def:deps/obs.def /out:deps/obs.lib
 
-      # - name: Configure plugin
-      #   shell: pwsh
-      #   run: |
-      #     cmake -S . -B build -G Ninja `
-      #       -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-      #       -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
-      #       -DCMAKE_INSTALL_PREFIX="$PWD/package" `
-      #       -DOBS_INCLUDE_DIRS="$PWD/deps/obs-studio/libobs" `
-      #       -DOBS_LIBRARIES="$PWD/deps/obs.lib"
+      - name: Configure plugin
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$PWD/package" `
+            -DOBS_INCLUDE_DIRS="$PWD/deps/obs-studio/libobs" `
+            -DOBS_LIBRARIES="$PWD/deps/obs.lib"
 
-      # - name: Build plugin
-      #   shell: pwsh
-      #   run: cmake --build build --config $env:BUILD_TYPE
+      - name: Build plugin
+        shell: pwsh
+        run: cmake --build build --config $env:BUILD_TYPE
 
-      # - name: Install plugin layout
-      #   shell: pwsh
-      #   run: cmake --install build --config $env:BUILD_TYPE
+      - name: Install plugin layout
+        shell: pwsh
+        run: cmake --install build --config $env:BUILD_TYPE
 
-      # - name: Package artifact
-      #   shell: pwsh
-      #   run: |
-      #     Compress-Archive -Path package/* -DestinationPath obs-text-pango-windows-x64.zip -Force
+      - name: Package artifact
+        shell: pwsh
+        run: |
+          Compress-Archive -Path package/* -DestinationPath obs-text-pango-windows-x64.zip -Force
 
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: obs-text-pango-windows-x64
-      #     path: obs-text-pango-windows-x64.zip
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-text-pango-windows-x64
+          path: obs-text-pango-windows-x64.zip
