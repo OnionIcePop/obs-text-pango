@@ -91,11 +91,12 @@ jobs:
                 -Headers @{ "User-Agent" = "GitHub Actions" } `
                 -Uri "https://api.github.com/repos/obsproject/obs-studio/releases/tags/$obsTag"
               $asset = $release.assets |
-                Where-Object { $_.name -match "Windows.*\.zip$" } |
+                Where-Object { $_.name -match "^OBS-Studio-.*-Windows-x64\.zip$" } |
                 Select-Object -First 1
               if (-not $asset) {
-                throw "Could not find an OBS Studio Windows zip asset for $obsTag."
+                throw "Could not find an OBS Studio Windows x64 zip asset for $obsTag."
               }
+              Write-Host "Downloading $($asset.name)"
               Invoke-WebRequest -Uri $asset.browser_download_url -OutFile obs-runtime.zip
               Expand-Archive -Path obs-runtime.zip -DestinationPath deps/obs-runtime
 
@@ -105,6 +106,10 @@ jobs:
           $dll = Get-ChildItem deps/obs-runtime -Recurse -Include obs.dll,libobs.dll |
             Select-Object -First 1
           if (-not $dll) {
+            Get-ChildItem deps/obs-runtime -Recurse -Filter *.dll |
+              Select-Object -ExpandProperty FullName |
+              Sort-Object |
+              Write-Host
             throw "Could not find obs.dll or libobs.dll in the OBS Studio Windows runtime."
           }
 
