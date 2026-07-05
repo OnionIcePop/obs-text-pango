@@ -574,9 +574,16 @@ bool obs_module_load()
 
 	FcConfig *config = FcConfigCreate();
 	FcBool complain = true;
-	if (FcConfigParseAndLoad(config, NULL, complain) == FcTrue) {
+	bool loaded_config = false;
+
+#ifndef _WIN32
+	loaded_config = FcConfigParseAndLoad(config, NULL, complain) == FcTrue;
+	if (loaded_config) {
 		blog(LOG_INFO, "[pango]: Loaded system fontconfig");
-	} else {
+	}
+#endif
+
+	if (!loaded_config) {
 		const char *path = obs_get_module_data_path(obs_current_module());
 		char *abs_path = os_get_abs_path_ptr(path);
 		char *tmplt_config_path = obs_module_file("fonts.conf");
