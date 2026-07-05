@@ -19,6 +19,7 @@ on:
 env:
   OBS_VERSION: ${{ inputs.obs_version || '31.1.1' }}
   BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
+  VCPKG_ROOT: C:\vcpkg
   VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Enable Visual Studio developer shell
         uses: ilammy/msvc-dev-cmd@v1
@@ -50,7 +51,7 @@ jobs:
         run: |
           vcpkg install `
             pango:x64-windows `
-            cairo[fontconfig,freetype,png]:x64-windows `
+            cairo[fontconfig,freetype]:x64-windows `
             fontconfig:x64-windows `
             freetype:x64-windows
 
