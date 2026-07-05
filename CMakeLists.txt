@@ -82,7 +82,7 @@ set(win32_static_LIBRARIES
 	libpng16_static
 	expat
 	usp10)
-if(WIN32)
+if(WIN32 AND NOT PC_PANGO_FOUND)
 	set(PLATFORM_LIBRARIES ${win32_static_LIBRARIES})
 endif()
 
