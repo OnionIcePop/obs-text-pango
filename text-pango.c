@@ -27,7 +27,6 @@ OBS_MODULE_USE_DEFAULT_LOCALE("text-pango", "en-US")
 #define DEFAULT_FACE "Sans Serif"
 #endif
 
-
 #define FILE_CHECK_TIMEOUT_SEC 1.0
 #define MAX_TEXTURE_SIZE 16384
 #ifndef max
@@ -107,6 +106,9 @@ void render_text(struct pango_source *src)
 		src->height = text_height;
 		src->width = text_width;
 	}
+
+	src->width = max(src->width, 1);
+	src->height = max(src->height, 1);
 
 	/* Allocate and initialize Cairo surface */
 	int stride = cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, src->width);
@@ -245,6 +247,7 @@ static void pango_source_get_defaults(obs_data_t *settings)
 	obs_data_t *font;
 
 	obs_data_set_default_bool(settings, "font_from_file", false);
+	obs_data_set_default_string(settings, "text", obs_module_text("Text"));
 
 	font = obs_data_create();
 	obs_data_set_default_string(font, "face", DEFAULT_FACE);
