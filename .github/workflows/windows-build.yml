@@ -89,8 +89,8 @@ jobs:
 
               #define OBS_INSTALL_PREFIX ""
               #define OBS_DATA_PATH "data/obs-studio"
-              #define OBS_PLUGIN_PATH "obs-plugins/64bit"
-              #define OBS_PLUGIN_DESTINATION "obs-plugins/64bit"
+              #define OBS_PLUGIN_PATH "plugins"
+              #define OBS_PLUGIN_DESTINATION "plugins"
               #define OBS_RELEASE_CANDIDATE 0
               #define OBS_BETA 0
               "@.Trim() | Set-Content -Encoding ascii deps/obs-studio/libobs/obsconfig.h

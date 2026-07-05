@@ -122,14 +122,15 @@ if(STANDALONE_PLUGIN)
 			DESTINATION data/)
 	else() # Not apple so normal layout
 		install(TARGETS text-pango
-			LIBRARY DESTINATION "obs-plugins/${_bit_suffix}/")
+			LIBRARY DESTINATION "text-pango/bin/${_bit_suffix}/"
+			RUNTIME DESTINATION "text-pango/bin/${_bit_suffix}/")
 		install(DIRECTORY data/
-			DESTINATION data/obs-plugins/text-pango)
+			DESTINATION text-pango/data)
 		# Platform specific data, like fontconfig in win32
 		install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
-			DESTINATION "obs-plugins/${_bit_suffix}/" OPTIONAL)
+			DESTINATION "text-pango/bin/${_bit_suffix}/" OPTIONAL)
 		install(DIRECTORY win32/
-			DESTINATION data/obs-plugins/text-pango)
+			DESTINATION text-pango/data)
 	endif()
 else()
 	set_target_properties_obs(text-pango PROPERTIES FOLDER plugins/text-pango PREFIX "")

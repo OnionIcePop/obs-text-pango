@@ -25,6 +25,7 @@ Current Features
 
 Considering Features
 ----------------
+
 * Custom text width
   * Vertical Text Align
   * Word wrapping
@@ -33,18 +34,20 @@ Install
 -------
 
 ### Linux
+
 Extract the tar from the [latest release](https://github.com/kkartaltepe/obs-text-pango/releases) into `~/.config/obs-studio/plugins/`
 
 You may need to install the dependencies from the `Build` section.
 
 ### MacOS
+
 Download the pkg from the [latest release](https://github.com/kkartaltepe/obs-text-pango/releases), right click on it and select `Open`.
 
 You may need to install the dependencies from the `Build` section.
 
 ### Windows
-Download the zip from [latest release](https://github.com/kkartaltepe/obs-text-pango/releases) and extract into `C:\Program Files\OBS-Studio` or wherever you have installed obs.
 
+Download the zip from [latest release](https://github.com/kkartaltepe/obs-text-pango/releases) and extract into `C:\ProgramData\obs-studio\plugins`.
 
 Build
 -----
@@ -53,12 +56,14 @@ You can either build the plugin as a standalone project or integrate it
 into the build of OBS Studio (untested).
 
 Building it as a standalone project follows the standard cmake approach.
-Create a new directory and run 
+Create a new directory and run
+
 ```bash
 cmake ... <path_to_source>
-	-DCMAKE_INSTALL_PREFIX=<path_to_deps_dir>
-	-DOBS_DIR=<path_to_obs>
+ -DCMAKE_INSTALL_PREFIX=<path_to_deps_dir>
+ -DOBS_DIR=<path_to_obs>
 ```
+
 for whichever build system you use (only ninja tested). You may also set
 the `OBS_DIR` environment variable to the location of the OBS source tree.
 Depending on the name of your obs build dir adjust `PATH_SUFFIXES`
@@ -73,16 +78,19 @@ the `plugins/obs-text-pango` folder of OBS Studio source and add it to the
 
 Linux
 -----
+
 On Debian and its derivitaves you can install `libpango1.0-dev` for all the build time dependencies. Everywhere else its typically just `pango`.
 
 For precompiled binaries extract to `~/.config/obs-studio/plugins` and ensure dependencies are installed.
 
 Windows
 -----
-You will have to build the toolchain yourself, but it should be simplified if you have a posix shell environment such as cygwin and the visual studio build tools via https://github.com/kkartaltepe/pango-win32-build
 
-Install by extracting into your obs studio folder' `obs-plugins`
+You will have to build the toolchain yourself, but it should be simplified if you have a posix shell environment such as cygwin and the visual studio build tools via <https://github.com/kkartaltepe/pango-win32-build>
+
+Install by extracting into `C:\ProgramData\obs-studio\plugins`.
 
 Mac
 -----
+
 Install pango via `brew install pango` and you should be set.
