@@ -10,14 +10,14 @@ on:
       obs_version:
         description: OBS Studio tag to build against
         required: false
-        default: 31.1.1
+        default: 32.1.2
       build_type:
         description: CMake build type
         required: false
         default: RelWithDebInfo
 
 env:
-  OBS_VERSION: ${{ inputs.obs_version || '31.1.1' }}
+  OBS_VERSION: ${{ inputs.obs_version || '32.1.2' }}
   BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
   VCPKG_ROOT: C:\vcpkg
   VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
