@@ -189,6 +189,45 @@ jobs:
           $buildType = $env:BUILD_TYPE
           cmake --install build --config $buildType
 
+      - name: Bundle runtime dependencies
+        shell: pwsh
+        run: |
+          $pluginBin = "$PWD/package/text-pango/bin/64bit"
+          $pluginDll = "$pluginBin/text-pango.dll"
+          $vcpkgBin = "C:/vcpkg/installed/x64-windows/bin"
+          $obsBin = (Get-ChildItem deps/obs-runtime -Recurse -Include obs.dll,libobs.dll |
+            Select-Object -First 1).Directory.FullName -replace "\\", "/"
+
+          if (-not (Test-Path $pluginDll)) {
+            throw "Could not find built plugin DLL at $pluginDll."
+          }
+          if (-not $obsBin) {
+            throw "Could not find OBS runtime DLL directory."
+          }
+
+          $script = @"
+          file(GET_RUNTIME_DEPENDENCIES
+            LIBRARIES "$($pluginDll -replace "\\", "/")"
+            DIRECTORIES "$vcpkgBin" "$obsBin"
+            RESOLVED_DEPENDENCIES_VAR resolved_deps
+            UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
+            POST_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" ".*[Ss]ystem32/.*" ".*[Ww]indows/[Ss]ysWOW64/.*")
+
+          if(unresolved_deps)
+            message(FATAL_ERROR "Unresolved runtime dependencies: `${unresolved_deps}")
+          endif()
+
+          foreach(dep IN LISTS resolved_deps)
+            get_filename_component(dep_name "`${dep}" NAME)
+            if(NOT dep_name MATCHES "^(obs|libobs)\\.dll$")
+              file(COPY "`${dep}" DESTINATION "$($pluginBin -replace "\\", "/")")
+            endif()
+          endforeach()
+          "@
+
+          Set-Content -Encoding ascii bundle-runtime-deps.cmake $script
+          cmake -P bundle-runtime-deps.cmake
+
       - name: Upload artifact
         uses: actions/upload-artifact@v7.0.1
         with:
