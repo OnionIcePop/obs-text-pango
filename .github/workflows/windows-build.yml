@@ -214,6 +214,10 @@ jobs:
             POST_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" ".*[Ss]ystem32/.*" ".*[Ww]indows/[Ss]ysWOW64/.*")
 
           if(unresolved_deps)
+            list(FILTER unresolved_deps EXCLUDE REGEX "^(api-ms-|ext-ms-).*")
+          endif()
+
+          if(unresolved_deps)
             message(FATAL_ERROR "Unresolved runtime dependencies: `${unresolved_deps}")
           endif()
 
