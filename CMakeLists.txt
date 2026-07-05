@@ -38,7 +38,11 @@ find_package(Cairo REQUIRED)
 find_package(Pangocairo REQUIRED)
 find_package(Pangoft2 REQUIRED)
 if(WIN32)
-	find_package(Pangowin32 REQUIRED)
+	find_package(Pangowin32 QUIET)
+	if(NOT Pangowin32_FOUND)
+		set(PANGOWIN32_INCLUDE_DIRS "")
+		set(PANGOWIN32_LIBRARIES "")
+	endif()
 endif()
 find_package(Fontconfig REQUIRED)
 find_package(Freetype REQUIRED)
@@ -49,6 +53,7 @@ include_directories(
 	${CAIRO_INCLUDE_DIRS}
 	${PANGOCAIRO_INCLUDE_DIRS}
 	${PANGOFT2_INCLUDE_DIRS}
+	${PANGOWIN32_INCLUDE_DIRS}
 	${FONTCONFIG_INCLUDE_DIRS}
 	${FREETYPE_INCLUDE_DIRS})
 if(NOT WIN32)
