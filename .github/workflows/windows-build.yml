@@ -21,7 +21,7 @@ env:
   BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
   VCPKG_ROOT: C:\vcpkg
   VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
-  VCPKG_PANGO_STACK_CACHE_KEY: pango-cairo-fontconfig-freetype-x64-windows
+  VCPKG_PANGO_STACK_CACHE_KEY: pango-cairo-fontconfig-freetype-pkgconf-x64-windows
 
 jobs:
   windows-x64:
@@ -70,7 +70,8 @@ jobs:
                 pango:x64-windows `
                 cairo[fontconfig,freetype]:x64-windows `
                 fontconfig:x64-windows `
-                freetype:x64-windows
+                freetype:x64-windows `
+                pkgconf:x64-windows
 
           - name: Download OBS Studio sources
             shell: pwsh
@@ -133,10 +134,16 @@ jobs:
       - name: Configure plugin
         shell: pwsh
         run: |
+          $env:PKG_CONFIG_PATH = @(
+            "$env:VCPKG_ROOT\installed\x64-windows\lib\pkgconfig",
+            "$env:VCPKG_ROOT\installed\x64-windows\share\pkgconfig"
+          ) -join ";"
+
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
             -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
             -DCMAKE_INSTALL_PREFIX="$PWD/package" `
+            -DPKG_CONFIG_EXECUTABLE="$env:VCPKG_ROOT/installed/x64-windows/tools/pkgconf/pkgconf.exe" `
             -DOBS_INCLUDE_DIRS="$PWD/deps/obs-studio/libobs" `
             -DOBS_LIBRARIES="$PWD/deps/obs.lib"
 
