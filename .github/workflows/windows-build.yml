@@ -66,7 +66,8 @@ jobs:
           - name: Install Pango stack with vcpkg
             shell: pwsh
             run: |
-              vcpkg install `
+              $env:VCPKG_ROOT = "C:\vcpkg"
+              & "$env:VCPKG_ROOT\vcpkg.exe" install `
                 pango:x64-windows `
                 cairo[fontconfig,freetype]:x64-windows `
                 fontconfig:x64-windows `
@@ -134,16 +135,26 @@ jobs:
       - name: Configure plugin
         shell: pwsh
         run: |
+          $vcpkgRoot = "C:\vcpkg"
+          $pkgconf = "$vcpkgRoot\installed\x64-windows\tools\pkgconf\pkgconf.exe"
+          if (-not (Test-Path $pkgconf)) {
+            Get-ChildItem "$vcpkgRoot\installed\x64-windows\tools" -Recurse -Filter *.exe |
+              Select-Object -ExpandProperty FullName |
+              Sort-Object |
+              Write-Host
+            throw "Could not find pkgconf at $pkgconf."
+          }
+
           $env:PKG_CONFIG_PATH = @(
-            "$env:VCPKG_ROOT\installed\x64-windows\lib\pkgconfig",
-            "$env:VCPKG_ROOT\installed\x64-windows\share\pkgconfig"
+            "$vcpkgRoot\installed\x64-windows\lib\pkgconfig",
+            "$vcpkgRoot\installed\x64-windows\share\pkgconfig"
           ) -join ";"
 
           cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="$vcpkgRoot/scripts/buildsystems/vcpkg.cmake" `
             -DCMAKE_INSTALL_PREFIX="$PWD/package" `
-            -DPKG_CONFIG_EXECUTABLE="$env:VCPKG_ROOT/installed/x64-windows/tools/pkgconf/pkgconf.exe" `
+            -DPKG_CONFIG_EXECUTABLE="$pkgconf" `
             -DOBS_INCLUDE_DIRS="$PWD/deps/obs-studio/libobs" `
             -DOBS_LIBRARIES="$PWD/deps/obs.lib"
 
