@@ -84,6 +84,16 @@ jobs:
                 -OutFile $archive
               Expand-Archive -Path $archive -DestinationPath deps
               Rename-Item -Path "deps/obs-studio-$obsTag" -NewName obs-studio
+              @"
+              #pragma once
+
+              #define OBS_INSTALL_PREFIX ""
+              #define OBS_DATA_PATH "data/obs-studio"
+              #define OBS_PLUGIN_PATH "obs-plugins/64bit"
+              #define OBS_PLUGIN_DESTINATION "obs-plugins/64bit"
+              #define OBS_RELEASE_CANDIDATE 0
+              #define OBS_BETA 0
+              "@.Trim() | Set-Content -Encoding ascii deps/obs-studio/libobs/obsconfig.h
 
           - name: Download OBS Studio Windows runtime
             shell: pwsh
