@@ -1,0 +1,109 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      obs_version:
+        description: OBS Studio tag to build against
+        required: false
+        default: 31.1.1
+      build_type:
+        description: CMake build type
+        required: false
+        default: RelWithDebInfo
+
+env:
+  OBS_VERSION: ${{ inputs.obs_version || '31.1.1' }}
+  BUILD_TYPE: ${{ inputs.build_type || 'RelWithDebInfo' }}
+  VCPKG_BINARY_SOURCES: clear;x-gha,readwrite
+
+jobs:
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable Visual Studio developer shell
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Set up Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: Export GitHub Actions cache for vcpkg
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '')
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '')
+
+      - name: Install Pango stack with vcpkg
+        shell: pwsh
+        run: |
+          vcpkg install `
+            pango:x64-windows `
+            cairo[fontconfig,freetype,png]:x64-windows `
+            fontconfig:x64-windows `
+            freetype:x64-windows
+
+      - name: Download OBS Studio sources
+        shell: pwsh
+        run: |
+          $obsTag = $env:OBS_VERSION
+          $archive = "obs-studio-$obsTag.zip"
+          Invoke-WebRequest `
+            -Uri "https://github.com/obsproject/obs-studio/archive/refs/tags/$obsTag.zip" `
+            -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath deps
+          Rename-Item -Path "deps/obs-studio-$obsTag" -NewName obs-studio
+
+      - name: Configure libobs shim
+        shell: pwsh
+        run: |
+          cmake -S deps/obs-studio/libobs -B build-libobs -G Ninja `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DENABLE_UI=OFF `
+            -DENABLE_SCRIPTING=OFF `
+            -DENABLE_PLUGINS=OFF
+
+      - name: Build libobs
+        shell: pwsh
+        run: cmake --build build-libobs --config $env:BUILD_TYPE --target libobs
+
+      - name: Configure plugin
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=$env:BUILD_TYPE `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_INSTALL_PREFIX="$PWD/package" `
+            -DOBS_INCLUDE_DIRS="$PWD/deps/obs-studio/libobs" `
+            -DOBS_LIBRARIES="$PWD/build-libobs/obs.lib"
+
+      - name: Build plugin
+        shell: pwsh
+        run: cmake --build build --config $env:BUILD_TYPE
+
+      - name: Install plugin layout
+        shell: pwsh
+        run: cmake --install build --config $env:BUILD_TYPE
+
+      - name: Package artifact
+        shell: pwsh
+        run: |
+          Compress-Archive -Path package/* -DestinationPath obs-text-pango-windows-x64.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-text-pango-windows-x64
+          path: obs-text-pango-windows-x64.zip
